@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes y Estadísticas - CCL</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .card-stat {
+            background: rgba(0, 15, 40, 0.5);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .stat-number { font-size: 3rem; font-weight: 800; text-shadow: 2px 2px 5px rgba(0,0,0,0.8); }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+    </style>
+</head>
+<body class="bg-dashboard">
+
+<nav class="navbar navbar-expand-lg navbar-institucional fixed-top">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center" href="/dashboard">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
+            <span style="color: #20c997;">PANEL DE ESTADÍSTICAS</span>
+        </a>
+
+        <div class="d-flex align-items-center">
+            <a href="/dashboard" class="btn btn-outline-light rounded-pill px-4 me-3 fw-bold shadow-sm">⬅ Volver al Menú</a>
+
+            <span class="texto-usuario d-flex align-items-center me-4">
+                    <img src="{{ url_for('static', filename='img/perfiles/' + session.get('foto', 'default.png')) }}"
+                         alt="Avatar" class="rounded-circle me-3 shadow-sm"
+                         style="width: 60px; height: 60px; object-fit: cover; border: 2px solid var(--amarillo-oro);">
+                    <div class="d-flex flex-column lh-1">
+                        <span class="fs-5 fw-bold text-white">{{ session['username'] }}</span>
+                        <span style="font-size: 0.85rem; color: var(--amarillo-oro); font-weight: 600;">{{ session['rol']|upper }}</span>
+                    </div>
+                </span>
+
+            <a href="/logout" class="btn btn-peligro btn-sm rounded-pill px-3 fw-bold shadow-sm">Cerrar Sesión</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid" style="margin-top: 140px; padding: 0 40px; margin-bottom: 50px;">
+
+    <h2 class="titulo-principal mb-4">Resumen General del Colegio</h2>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card-stat" style="border-top: 4px solid var(--azul-marino);">
+                <h4 class="fw-bold">Total de Artículos</h4>
+                <div class="stat-number">{{ stats.total }}</div>
+                <p class="text-light opacity-75">Equipamiento registrado en todo el recinto</p>
+                <a href="/reportes/exportar/total" class="btn btn-outline-light mt-2 fw-bold">📥 Exportar Todo</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-stat" style="border-top: 4px solid #dc3545; background: rgba(220, 53, 69, 0.15);">
+                <h4 class="fw-bold text-danger">Artículos en Mal Estado</h4>
+                <div class="stat-number text-danger">{{ stats.malo }}</div>
+                <p class="text-warning fw-bold mb-1">⚠️ Requieren reparación urgente</p>
+                <a href="/reportes/exportar/malo" class="btn btn-danger mt-2 fw-bold shadow">📥 Exportar Dañados</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-stat" style="border-top: 4px solid #6c757d; background: rgba(108, 117, 125, 0.2);">
+                <h4 class="fw-bold text-secondary">Artículos Dados de Baja</h4>
+                <div class="stat-number text-secondary">{{ stats.baja }}</div>
+                <p class="text-light fw-bold mb-1">🛑 Listos para desecho o donación</p>
+                <a href="/reportes/exportar/baja" class="btn btn-secondary mt-2 fw-bold shadow">📥 Exportar Bajas</a>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="titulo-principal mb-4">Estado del Inventario por Módulo</h2>
+
+    <div class="row g-4">
+        {% for modulo, estados in graficos.items() %}
+        <div class="col-lg-4 col-md-6">
+            <div class="panel-glass text-center">
+                <h4 class="titulo-panel mb-3">{{ modulo }}</h4>
+                <div class="chart-container">
+                    <canvas id="grafico_{{ modulo|replace(' ', '') }}"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if not graficos %}
+        <div class="col-12 text-center text-white opacity-75 mt-5">
+            <h4>No hay suficientes datos registrados para generar gráficos.</h4>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    const datosGraficos = {{ graficos | tojson }};
+    const coloresGhost = {
+        'Bueno': 'rgba(40, 167, 69, 0.8)',
+        'Regular': 'rgba(255, 193, 7, 0.8)',
+        'Malo': 'rgba(220, 53, 69, 0.8)',
+        'De baja': 'rgba(108, 117, 125, 0.8)'
+    };
+    const bordesGhost = {
+        'Bueno': '#28a745',
+        'Regular': '#ffc107',
+        'Malo': '#dc3545',
+        'De baja': '#adb5bd'
+    };
+
+    Chart.defaults.color = '#fff';
+    Chart.defaults.font.family = "'Segoe UI', sans-serif";
+
+    for (const [modulo, estados] of Object.entries(datosGraficos)) {
+        const ctx = document.getElementById('grafico_' + modulo.replace(/\s+/g, ''));
+        const totalItems = Object.values(estados).reduce((a, b) => a + b, 0);
+        if(totalItems === 0) continue;
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(estados),
+                datasets: [{
+                    data: Object.values(estados),
+                    backgroundColor: Object.keys(estados).map(estado => coloresGhost[estado]),
+                    borderColor: Object.keys(estados).map(estado => bordesGhost[estado]),
+                    borderWidth: 2,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) { label += ': '; }
+                                let valor = context.raw;
+                                let porcentaje = ((valor * 100) / totalItems).toFixed(1);
+                                return label + valor + ' items (' + porcentaje + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>

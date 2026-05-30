@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Colegio Concepción Linares</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-dashboard">
+
+<nav class="navbar navbar-expand-lg navbar-institucional fixed-top">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
+            <span>PANEL PRINCIPAL</span>
+        </a>
+
+        <div class="d-flex align-items-center">
+                <span class="texto-usuario d-flex align-items-center me-4">
+                    <img src="{{ url_for('static', filename='img/perfiles/' + session.get('foto', 'default.png')) }}"
+                         alt="Avatar" class="rounded-circle me-3 shadow-sm"
+                         style="width: 60px; height: 60px; object-fit: cover; border: 2px solid var(--amarillo-oro);">
+                    <div class="d-flex flex-column lh-1">
+                        <span class="fs-5 fw-bold text-white">{{ session['username'] }}</span>
+                        <span style="font-size: 0.85rem; color: var(--amarillo-oro); font-weight: 600;">{{ session['rol']|upper }}</span>
+                    </div>
+                </span>
+            <a href="/logout" class="btn btn-peligro btn-sm rounded-pill px-3 fw-bold shadow-sm">Cerrar Sesión</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container" style="margin-top: 140px; margin-bottom: 50px;">
+    <h2 class="titulo-principal text-center mb-5">
+        ¿Qué área deseas gestionar hoy?
+    </h2>
+
+    <div class="row g-4 justify-content-center">
+        {% for modulo in modulos %}
+        {% if session['rol'] in modulo.roles %}
+        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+            <div class="tarjeta-modulo">
+
+                <div class="icono-modulo">{{ modulo.icono }}</div>
+
+                <a href="{% if modulo.ruta == 'Usuarios' %}/usuarios{% elif modulo.ruta == 'Reportes' %}/reportes{% else %}/inventario/{{ modulo.ruta }}{% endif %}"
+                   class="btn btn-modulo {% if modulo.ruta == 'Usuarios' %}btn-usuarios{% elif modulo.ruta == 'Reportes' %}btn-success{% endif %} text-decoration-none">
+                    {{ modulo.titulo }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

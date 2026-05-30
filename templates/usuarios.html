@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios - CCL</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .fila-clickable { cursor: pointer; }
+        /* Efecto hover para nuestro nuevo input de archivo */
+        .file-upload-wrapper:hover { border-color: var(--amarillo-oro) !important; background: rgba(0, 0, 0, 0.4); }
+    </style>
+</head>
+<body class="bg-dashboard">
+
+<nav class="navbar navbar-expand-lg navbar-institucional fixed-top">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center" href="/dashboard">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
+            <span class="text-danger">ADMINISTRACIÓN DE USUARIOS</span>
+        </a>
+
+        <div class="d-flex align-items-center">
+            <a href="/dashboard" class="btn btn-outline-light rounded-pill px-4 me-3 fw-bold shadow-sm">⬅ Volver al Menú</a>
+
+            <span class="texto-usuario d-flex align-items-center me-4">
+                    <img src="{{ url_for('static', filename='img/perfiles/' + session.get('foto', 'default.png')) }}"
+                         alt="Avatar" class="rounded-circle me-3 shadow-sm"
+                         style="width: 60px; height: 60px; object-fit: cover; border: 2px solid var(--amarillo-oro);">
+                    <div class="d-flex flex-column lh-1">
+                        <span class="fs-5 fw-bold text-white">{{ session['username'] }}</span>
+                        <span style="font-size: 0.85rem; color: var(--amarillo-oro); font-weight: 600;">{{ session['rol']|upper }}</span>
+                    </div>
+                </span>
+
+            <a href="/logout" class="btn btn-peligro btn-sm rounded-pill px-3 fw-bold shadow-sm">Cerrar Sesión</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid" style="margin-top: 140px; padding: 0 40px; margin-bottom: 50px;">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{% if category == 'success' %}success{% else %}danger{% endif %} alert-dismissible fade show shadow" role="alert">
+        <strong>{{ message }}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="row g-4">
+        <div class="col-lg-4 col-md-5">
+            <div class="panel-glass">
+                <h3 class="titulo-panel text-danger">Ficha de Usuario</h3>
+
+                <form action="/usuarios/procesar" method="POST" id="formUsuarios" enctype="multipart/form-data">
+                    <input type="hidden" name="id_usuario" id="txt_id_usuario">
+
+                    <label class="text-white mb-1 fw-bold fs-6">Foto de Perfil (Opcional)</label>
+                    <div class="mb-2">
+                        <input type="file" name="foto" id="file_foto" class="d-none" accept="image/*" onchange="mostrarNombreArchivo(this)">
+                        <label for="file_foto" class="form-control form-control-ghost d-flex justify-content-between align-items-center file-upload-wrapper" style="cursor: pointer; transition: all 0.3s;">
+                            <span id="nombre_archivo_seleccionado" class="text-light opacity-75 text-truncate" style="max-width: 70%;">Ninguna imagen seleccionada...</span>
+                            <span class="badge bg-light text-dark shadow-sm px-2 py-1 fs-6">📁 Examinar</span>
+                        </label>
+                    </div>
+
+                    <label class="text-white mb-1 fw-bold fs-6 mt-2">Nombre de Usuario (Login)</label>
+                    <input type="text" name="username" id="txt_username" class="form-control form-control-ghost" placeholder="Ej: bcontreras" required>
+
+                    <label class="text-white mb-1 fw-bold fs-6 mt-2">Contraseña</label>
+                    <input type="password" name="password" id="txt_password" class="form-control form-control-ghost" placeholder="*** (Dejar en blanco para no cambiar)">
+
+                    <label class="text-white mb-1 fw-bold fs-6 mt-2">Rol del Sistema</label>
+                    <select name="rol" id="cb_rol" class="form-select form-control-ghost" required>
+                        <option value="" disabled selected>Asignar Rol...</option>
+                        <option value="Admin">Administrador</option>
+                        <option value="Docente">Docente</option>
+                        <option value="Administrativo">Administrativo</option>
+                    </select>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" name="accion" value="guardar" class="btn btn-institucional">CREAR USUARIO</button>
+                        <button type="submit" name="accion" value="actualizar" class="btn btn-warning fw-bold text-dark shadow-sm">ACTUALIZAR</button>
+                        <button type="submit" name="accion" value="eliminar" class="btn btn-peligro" onclick="return confirm('¿Seguro que deseas ELIMINAR este usuario?');">ELIMINAR</button>
+                        <button type="button" class="btn btn-outline-light mt-2 fw-bold" onclick="limpiarFormulario()">Limpiar Selección</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-8 col-md-7">
+            <div class="panel-glass" style="min-height: 550px;">
+                <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-3">
+                    <div>
+                        <h3 class="titulo-panel mb-0">Personal Autorizado</h3>
+                        <small class="fw-normal fs-6 text-light opacity-75">(Clic en un usuario para editar)</small>
+                    </div>
+                    <div style="min-width: 250px; flex-grow: 1; max-width: 400px;">
+                        <input type="text" id="inputBusqueda" class="form-control form-control-ghost mb-0" placeholder="🔍 Buscar..." onkeyup="filtrarTabla()">
+                    </div>
+                </div>
+
+                <div class="table-responsive mt-3">
+                    <table class="tabla-custom">
+                        <thead>
+                        <tr>
+                            <th>Avatar</th>
+                            <th>Nombre de Usuario</th>
+                            <th>Nivel de Acceso</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% if usuarios %}
+                        {% for usu in usuarios %}
+                        <tr class="fila-clickable" onclick="seleccionarFila('{{ usu.id_usuario }}', '{{ usu.username }}', '{{ usu.rol }}')">
+                            <td>
+                                <img src="{{ url_for('static', filename='img/perfiles/' + (usu.foto_perfil if usu.foto_perfil else 'default.png')) }}"
+                                     alt="Avatar" class="rounded-circle shadow-sm" style="width: 45px; height: 45px; object-fit: cover; border: 1px solid rgba(255,255,255,0.3);">
+                            </td>
+                            <td class="fs-5 fw-bold">{{ usu.username }}</td>
+                            <td>
+                                            <span class="badge badge-neon {% if usu.rol == 'Admin' %}neon-malo{% elif usu.rol == 'Docente' %}neon-baja{% else %}neon-bueno{% endif %}">
+                                                {{ usu.rol }}
+                                            </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center py-5 opacity-75">No hay usuarios.</td>
+                        </tr>
+                        {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // NUEVA FUNCIÓN: Muestra el nombre del archivo seleccionado con estilo
+    function mostrarNombreArchivo(input) {
+        let labelTexto = document.getElementById('nombre_archivo_seleccionado');
+        if (input.files && input.files[0]) {
+            labelTexto.textContent = input.files[0].name;
+            labelTexto.classList.remove('text-light', 'opacity-75');
+            labelTexto.classList.add('text-warning', 'fw-bold'); // Letra amarilla cuando hay archivo
+        } else {
+            labelTexto.textContent = "Ninguna imagen seleccionada...";
+            labelTexto.classList.remove('text-warning', 'fw-bold');
+            labelTexto.classList.add('text-light', 'opacity-75');
+        }
+    }
+
+    function seleccionarFila(id, username, rol) {
+        document.getElementById('txt_id_usuario').value = id;
+        document.getElementById('txt_username').value = username;
+        document.getElementById('txt_password').value = "";
+
+        // Reseteamos el input de archivo y su diseño visual
+        let inputArchivo = document.getElementById('file_foto');
+        inputArchivo.value = "";
+        mostrarNombreArchivo(inputArchivo);
+
+        document.getElementById('cb_rol').value = rol;
+        document.getElementById('formUsuarios').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function limpiarFormulario() {
+        document.getElementById('txt_id_usuario').value = "";
+        document.getElementById('formUsuarios').reset();
+
+        // Reseteamos el input de archivo visual
+        mostrarNombreArchivo(document.getElementById('file_foto'));
+    }
+
+    function filtrarTabla() {
+        let input = document.getElementById("inputBusqueda");
+        let filtro = input.value.toLowerCase();
+        let filas = document.querySelectorAll(".tabla-custom tbody tr");
+        filas.forEach(function(fila) {
+            if (fila.cells.length === 1) return;
+            let textoFila = fila.textContent.toLowerCase();
+            fila.style.display = textoFila.includes(filtro) ? "" : "none";
+        });
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

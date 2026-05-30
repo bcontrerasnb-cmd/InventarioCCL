@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario {{ tipo_modulo }} - CCL</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style> .fila-clickable { cursor: pointer; } </style>
+</head>
+<body class="bg-dashboard">
+
+<nav class="navbar navbar-expand-lg navbar-institucional fixed-top">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center" href="/dashboard">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
+            <span>INVENTARIO: {{ tipo_modulo | upper }}</span>
+        </a>
+
+        <div class="d-flex align-items-center">
+            <a href="/dashboard" class="btn btn-outline-light rounded-pill px-4 me-3 fw-bold shadow-sm">⬅ Volver al Menú</a>
+
+            <span class="texto-usuario d-flex align-items-center me-4">
+                    <img src="{{ url_for('static', filename='img/perfiles/' + session.get('foto', 'default.png')) }}"
+                         alt="Avatar" class="rounded-circle me-3 shadow-sm"
+                         style="width: 60px; height: 60px; object-fit: cover; border: 2px solid var(--amarillo-oro);">
+                    <div class="d-flex flex-column lh-1">
+                        <span class="fs-5 fw-bold text-white">{{ session['username'] }}</span>
+                        <span style="font-size: 0.85rem; color: var(--amarillo-oro); font-weight: 600;">{{ session['rol']|upper }}</span>
+                    </div>
+                </span>
+
+            <a href="/logout" class="btn btn-peligro btn-sm rounded-pill px-3 fw-bold shadow-sm">Cerrar Sesión</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid" style="margin-top: 140px; padding: 0 40px; margin-bottom: 50px;">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{% if category == 'success' %}success{% else %}danger{% endif %} alert-dismissible fade show shadow" role="alert">
+        <strong>{{ message }}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="row g-4">
+        <div class="col-lg-4 col-md-5">
+            <div class="panel-glass">
+                <h3 class="titulo-panel">Gestión de Artículo</h3>
+
+                <form action="/inventario/{{ tipo_modulo }}/procesar" method="POST" id="formInventario">
+                    <input type="hidden" name="id_item" id="txt_id_item">
+                    <input type="text" name="codigo" id="txt_codigo" class="form-control form-control-ghost" placeholder="Código de Barras" required>
+                    <input type="text" name="nombre" id="txt_nombre" class="form-control form-control-ghost" placeholder="Nombre del Artículo" required>
+
+                    <select name="categoria" id="cb_categoria" class="form-select form-control-ghost" required>
+                        <option value="" disabled selected>Seleccione Categoría...</option>
+                        <option value="Mobiliario">Mobiliario</option>
+                        <option value="Tecnología">Tecnología</option>
+                        <option value="Material Educativo">Material Educativo</option>
+                    </select>
+
+                    <select name="id_sala" id="cb_sala" class="form-select form-control-ghost" required>
+                        <option value="" disabled selected>Seleccione Ubicación...</option>
+                        {% for sala in salas %}
+                        <option value="{{ sala.id_sala }}">{{ sala.nombre }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="number" name="cantidad" id="txt_cantidad" class="form-control form-control-ghost" placeholder="Cantidad" required>
+
+                    <select name="estado" id="cb_estado" class="form-select form-control-ghost" required>
+                        <option value="" disabled selected>Seleccione Estado...</option>
+                        <option value="Bueno">Bueno</option>
+                        <option value="Regular">Regular</option>
+                        <option value="Malo">Malo</option>
+                        <option value="De baja">De baja</option>
+                    </select>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" name="accion" value="guardar" class="btn btn-institucional">GUARDAR NUEVO</button>
+                        {% if session['rol'] == 'Admin' %}
+                        <button type="submit" name="accion" value="actualizar" class="btn btn-warning fw-bold text-dark shadow-sm">ACTUALIZAR</button>
+                        <button type="submit" name="accion" value="eliminar" class="btn btn-peligro" onclick="return confirm('¿Seguro que deseas eliminar este artículo?');">ELIMINAR</button>
+                        {% else %}
+                        <button type="button" class="btn btn-warning fw-bold text-dark opacity-50" disabled>ACTUALIZAR</button>
+                        <button type="button" class="btn btn-secondary opacity-50" disabled>ELIMINAR</button>
+                        {% endif %}
+                        <button type="button" class="btn btn-outline-light mt-2 fw-bold" onclick="limpiarFormulario()">Limpiar Selección</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-8 col-md-7">
+            <div class="panel-glass" style="min-height: 550px;">
+                <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-3">
+                    <div>
+                        <h3 class="titulo-panel mb-0">Artículos Registrados</h3>
+                        <small class="fw-normal fs-6 text-light opacity-75">(Clic en una fila para editar)</small>
+                    </div>
+                    <div class="d-flex gap-2" style="flex-grow: 1; max-width: 500px;">
+                        <input type="text" id="inputBusqueda" class="form-control form-control-ghost mb-0" placeholder="🔍 Buscar artículo..." onkeyup="filtrarTabla()" style="flex-grow: 1;">
+                        <a href="/inventario/{{ tipo_modulo }}/exportar" class="btn btn-success fw-bold d-flex align-items-center gap-2 shadow-sm" style="border-radius: 8px;">
+                            <span style="font-size: 1.2rem;">📥</span> Descargar
+                        </a>
+                    </div>
+                </div>
+
+                <div class="table-responsive mt-3">
+                    <table class="tabla-custom">
+                        <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Artículo</th>
+                            <th>Categoría</th>
+                            <th>Ubicación</th>
+                            <th>Cant.</th>
+                            <th>Estado</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% if articulos %}
+                        {% for art in articulos %}
+                        <tr class="fila-clickable" onclick="seleccionarFila('{{ art.id_item }}', '{{ art.codigo_barras }}', '{{ art.nombre }}', '{{ art.categoria }}', '{{ art.id_sala }}', '{{ art.cantidad }}', '{{ art.estado }}')">
+                            <td><strong>{{ art.codigo_barras }}</strong></td>
+                            <td>{{ art.nombre }}</td>
+                            <td><span class="badge badge-neon badge-categoria">{{ art.categoria }}</span></td>
+                            <td>{{ art.sala }}</td>
+                            <td><strong>{{ art.cantidad }}</strong></td>
+                            <td>
+                                            <span class="badge badge-neon {% if art.estado == 'Bueno' %}neon-bueno{% elif art.estado == 'Regular' %}neon-regular{% elif art.estado == 'Malo' %}neon-malo{% else %}neon-baja{% endif %}">
+                                                {{ art.estado }}
+                                            </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 opacity-75">No hay artículos registrados.</td>
+                        </tr>
+                        {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function seleccionarFila(id, codigo, nombre, categoria, id_sala, cantidad, estado) {
+        document.getElementById('txt_id_item').value = id;
+        document.getElementById('txt_codigo').value = codigo;
+        document.getElementById('txt_nombre').value = nombre;
+        document.getElementById('cb_categoria').value = categoria;
+        document.getElementById('cb_sala').value = id_sala;
+        document.getElementById('txt_cantidad').value = cantidad;
+        document.getElementById('cb_estado').value = estado;
+        document.getElementById('formInventario').scrollIntoView({ behavior: 'smooth' });
+    }
+    function limpiarFormulario() {
+        document.getElementById('txt_id_item').value = "";
+        document.getElementById('formInventario').reset();
+    }
+    function filtrarTabla() {
+        let input = document.getElementById("inputBusqueda");
+        let filtro = input.value.toLowerCase();
+        let filas = document.querySelectorAll(".tabla-custom tbody tr");
+        filas.forEach(function(fila) {
+            if (fila.cells.length === 1) return;
+            let textoFila = fila.textContent.toLowerCase();
+            fila.style.display = textoFila.includes(filtro) ? "" : "none";
+        });
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

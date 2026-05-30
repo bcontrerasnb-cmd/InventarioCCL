@@ -1,0 +1,367 @@
+/* =========================================
+   ESTILOS GENERALES DEL SITIO CCL
+   ========================================= */
+
+:root {
+    --azul-marino: #002B5C;
+    --azul-hover: #00408A;
+    --amarillo-oro: #FFD100;
+    --texto-oscuro: #333333;
+    --texto-claro: #6c757d;
+}
+
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Fondo unificado (Login y Dashboard) al 25% de opacidad */
+.bg-login, .bg-dashboard {
+    background-image: linear-gradient(rgba(0, 43, 92, 0.25), rgba(0, 43, 92, 0.25)), url('../img/fondo.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-dashboard {
+    display: block;
+}
+
+/* =========================================
+   ESTILOS COMUNES DE "GHOST UI"
+   ========================================= */
+
+.titulo-principal {
+    color: #FFFFFF;
+    font-weight: 800;
+    font-size: 2.2rem;
+    margin-bottom: 5px;
+    text-shadow: 2px 3px 8px rgba(0, 0, 0, 0.9);
+}
+
+.subtitulo-principal {
+    color: #f8f9fa;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 30px;
+    text-shadow: 1px 2px 5px rgba(0, 0, 0, 0.8);
+}
+
+.btn-institucional {
+    background-color: var(--azul-marino);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+.btn-institucional:hover {
+    background-color: var(--amarillo-oro);
+    color: var(--azul-marino);
+    transform: translateY(-2px);
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.6);
+}
+
+.btn-peligro {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+.btn-peligro:hover {
+    background-color: #c82333;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0px 8px 20px rgba(220, 53, 69, 0.5);
+}
+
+.form-control-custom {
+    border-radius: 8px;
+    padding: 12px 15px;
+    border: none;
+    background-color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 15px;
+    box-shadow: inset 0px 2px 5px rgba(0,0,0,0.1);
+}
+
+.form-control-custom:focus {
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(0, 43, 92, 0.3);
+    outline: none;
+}
+
+/* =========================================
+   GHOST UI: TARJETA DE LOGIN
+   ========================================= */
+.tarjeta-login {
+    background: transparent;
+    padding: 40px;
+    border-radius: 20px;
+    border: none;
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: inset 0 0 50px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(2px);
+}
+
+.logo-login {
+    width: 130px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0px 5px 15px rgba(0,0,0,0.5));
+}
+
+/* =========================================
+   GHOST UI: DASHBOARD (Navegación y Tarjetas)
+   ========================================= */
+
+.navbar-institucional {
+    background-color: rgba(0, 43, 92, 0.95);
+    border-bottom: 3px solid var(--amarillo-oro);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.navbar-brand img {
+    height: 45px;
+    margin-right: 15px;
+}
+
+.navbar-brand span {
+    color: white;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 0.5px;
+}
+
+.texto-usuario {
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+/* Tarjetas de Módulos (Reducidas un 10%) */
+.tarjeta-modulo {
+    background: transparent;
+    border-radius: 20px;
+    padding: 30px 15px; /* Reducido para compactar */
+    text-align: center;
+    border: none;
+    transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px; /* Espacio reducido entre icono y botón */
+}
+
+.tarjeta-modulo:hover {
+    transform: translateY(-8px);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+.icono-modulo {
+    font-size: 3.8rem; /* Tamaño de icono reducido (antes 4.5rem) */
+    margin-bottom: 0;
+    text-shadow: 2px 5px 12px rgba(0, 0, 0, 0.7);
+}
+
+.btn-modulo {
+    background-color: var(--azul-marino);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 1.1rem; /* Texto levemente más pequeño */
+    padding: 10px 20px; /* Padding ajustado */
+    width: 100%;
+    transition: all 0.3s ease;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.5);
+    text-shadow: 1px 2px 4px rgba(0,0,0,0.4);
+}
+
+.btn-modulo:hover {
+    background-color: var(--amarillo-oro);
+    color: var(--azul-marino);
+    transform: translateY(-2px);
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.6);
+    text-shadow: none;
+}
+
+.btn-usuarios {
+    background-color: #dc3545;
+}
+
+.btn-usuarios:hover {
+    background-color: #c82333;
+    color: white;
+}
+/* =========================================
+   GHOST UI: MÓDULO DE INVENTARIO
+   ========================================= */
+
+/* Paneles de Cristal Esmerilado */
+.panel-glass {
+    background: rgba(0, 15, 40, 0.4);
+    backdrop-filter: blur(4px); /* EL CAMBIO: Reducido de 10px a 4px */
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.titulo-panel {
+    color: #FFFFFF;
+    font-weight: 800;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    text-shadow: 1px 2px 5px rgba(0, 0, 0, 0.8);
+}
+
+/* Inputs Fantasma (Formulario) */
+.form-control-ghost {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #FFFFFF !important;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s;
+}
+
+.form-control-ghost::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.form-control-ghost:focus {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: var(--amarillo-oro);
+    box-shadow: 0 0 10px rgba(255, 209, 0, 0.3);
+    outline: none;
+}
+
+/* Para que las opciones del menú desplegable se lean bien */
+.form-control-ghost option {
+    background-color: var(--azul-marino);
+    color: white;
+}
+
+/* Tabla Fantasma */
+.tabla-custom {
+    width: 100%;
+    border-collapse: collapse;
+    color: #FFFFFF; /* Todo el texto de la tabla en blanco */
+}
+
+.tabla-custom thead {
+    background-color: rgba(0, 43, 92, 0.6);
+    backdrop-filter: blur(3px); /* EL CAMBIO: Reducido de 5px a 3px */
+}
+
+.tabla-custom th {
+    padding: 15px;
+    font-weight: 700;
+    text-align: left;
+    border-bottom: 2px solid var(--amarillo-oro);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+.tabla-custom td {
+    padding: 12px 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Línea divisoria súper sutil */
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+.tabla-custom tbody tr {
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.tabla-custom tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.08); /* Destello al pasar el mouse */
+    transform: scale(1.01); /* Pequeño efecto 3D en la fila */
+}
+
+/* ESTADOS NEÓN (Badges) */
+.badge-neon {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.neon-bueno {
+    background: rgba(25, 135, 84, 0.2);
+    border: 1px solid #28a745;
+    color: #28a745;
+}
+
+.neon-regular {
+    background: rgba(255, 193, 7, 0.2);
+    border: 1px solid #ffc107;
+    color: #ffc107;
+}
+
+.neon-malo {
+    background: rgba(220, 53, 69, 0.2);
+    border: 1px solid #dc3545;
+    color: #ff6b7a;
+}
+
+.neon-baja {
+    background: rgba(108, 117, 125, 0.2);
+    border: 1px solid #adb5bd;
+    color: #ced4da;
+}
+
+.badge-categoria {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: white;
+}
+/* =========================================
+   DETALLES PREMIUM: SCROLLBAR Y NÚMEROS
+   ========================================= */
+
+/* 1. Eliminar las flechas (spinners) del input de Cantidad */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield; /* Soporte para Firefox */
+}
+
+/* 2. Barra de Desplazamiento (Scrollbar) estilo Cristal */
+::-webkit-scrollbar {
+    width: 8px;  /* Grosor de la barra vertical */
+    height: 8px; /* Grosor de la barra horizontal (si aparece en la tabla) */
+}
+
+::-webkit-scrollbar-track {
+    background: transparent; /* La pista o canaleta se vuelve invisible */
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2); /* Barrita blanca muy sutil */
+    border-radius: 10px; /* Bordes redondeados elegantes */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4); /* Se ilumina un poco al pasar el mouse */
+}
