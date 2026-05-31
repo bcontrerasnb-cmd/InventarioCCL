@@ -1,25 +1,22 @@
-import mysql.connector
-from mysql.connector import Error
+import psycopg2
+import psycopg2.extras
+import os
+from psycopg2 import Error
 
 def conectar():
     try:
-        conexion = mysql.connector.connect(
-            host='localhost',
-            database='inventario_ccl',
-            user='root',
-            password=''
-        )
-        if conexion.is_connected():
-            return conexion
+        # Render le entregará esta URL de Supabase automáticamente a tu código
+        conexion = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        return conexion
     except Error as e:
-        print(f"Error al conectar a MySQL: {e}")
+        print(f"Error al conectar a PostgreSQL: {e}")
     return None
 
 def validar_login(username, password):
     conexion = conectar()
     if conexion:
         try:
-            cursor = conexion.cursor(dictionary=True)
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             sql = "SELECT * FROM usuarios WHERE username = %s AND password = %s"
             cursor.execute(sql, (username, password))
             usuario = cursor.fetchone()
@@ -39,7 +36,7 @@ def obtener_articulos(tipo_ubicacion):
     articulos = []
     if conexion:
         try:
-            cursor = conexion.cursor(dictionary=True)
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             sql = """
                   SELECT i.id_item, i.codigo_barras, i.nombre, i.categoria, s.id_sala, s.nombre as sala, i.cantidad, i.estado
                   FROM item_inventario i
@@ -60,7 +57,7 @@ def obtener_salas_por_tipo(tipo_sala):
     salas = []
     if conexion:
         try:
-            cursor = conexion.cursor(dictionary=True)
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             sql = "SELECT id_sala, nombre FROM sala_clases WHERE tipo_sala = %s"
             cursor.execute(sql, (tipo_sala,))
             salas = cursor.fetchall()
@@ -75,7 +72,7 @@ def registrar_articulo(codigo, nombre, categoria, cantidad, estado, id_sala):
     conexion = conectar()
     if conexion:
         try:
-            cursor = conexion.cursor()
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             sql = "INSERT INTO item_inventario (codigo_barras, nombre, categoria, cantidad, estado, id_sala) VALUES (%s, %s, %s, %s, %s, %s)"
             cursor.execute(sql, (codigo, nombre, categoria, cantidad, estado, id_sala))
             conexion.commit()
@@ -91,7 +88,7 @@ def actualizar_articulo(id_item, codigo, nombre, categoria, cantidad, estado, id
     conexion = conectar()
     if conexion:
         try:
-            cursor = conexion.cursor()
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             sql = """UPDATE item_inventario
                      SET codigo_barras=%s, nombre=%s, categoria=%s, cantidad=%s, estado=%s, id_sala=%s
                      WHERE id_item=%s"""
@@ -109,7 +106,7 @@ def eliminar_articulo(id_item):
     conexion = conectar()
     if conexion:
         try:
-            cursor = conexion.cursor()
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             sql = "DELETE FROM item_inventario WHERE id_item=%s"
             cursor.execute(sql, (id_item,))
             conexion.commit()
@@ -129,7 +126,7 @@ def obtener_usuarios():
     usuarios = []
     if conexion:
         try:
-            cursor = conexion.cursor(dictionary=True)
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             sql = "SELECT id_usuario, username, rol, foto_perfil FROM usuarios"
             cursor.execute(sql)
             usuarios = cursor.fetchall()
@@ -144,7 +141,7 @@ def registrar_usuario(username, password, rol, foto_perfil):
     conexion = conectar()
     if conexion:
         try:
-            cursor = conexion.cursor()
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             sql = "INSERT INTO usuarios (username, password, rol, foto_perfil) VALUES (%s, %s, %s, %s)"
             cursor.execute(sql, (username, password, rol, foto_perfil))
             conexion.commit()
@@ -160,7 +157,7 @@ def actualizar_usuario(id_usuario, username, password, rol, foto_perfil):
     conexion = conectar()
     if conexion:
         try:
-            cursor = conexion.cursor()
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             query = "UPDATE usuarios SET username=%s, rol=%s"
             params = [username, rol]
 
@@ -188,7 +185,7 @@ def eliminar_usuario(id_usuario):
     conexion = conectar()
     if conexion:
         try:
-            cursor = conexion.cursor()
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             sql = "DELETE FROM usuarios WHERE id_usuario=%s"
             cursor.execute(sql, (id_usuario,))
             conexion.commit()
@@ -208,7 +205,7 @@ def obtener_estadisticas_generales():
     stats = {'total': 0, 'malo': 0, 'baja': 0}
     if conexion:
         try:
-            cursor = conexion.cursor(dictionary=True)
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cursor.execute("SELECT IFNULL(SUM(cantidad), 0) as count FROM item_inventario")
             stats['total'] = cursor.fetchone()['count']
 
@@ -229,7 +226,7 @@ def obtener_datos_graficos():
     datos = {}
     if conexion:
         try:
-            cursor = conexion.cursor(dictionary=True)
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             # Agrupamos la suma de cantidades por tipo de sala y estado
             sql = """
                   SELECT s.tipo_sala, i.estado, SUM(i.cantidad) as total_estado
@@ -267,7 +264,7 @@ def obtener_reporte_articulos(filtro):
     articulos = []
     if conexion:
         try:
-            cursor = conexion.cursor(dictionary=True)
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             base_sql = """
                        SELECT i.codigo_barras, i.nombre, i.categoria, s.nombre as sala, s.tipo_sala, i.cantidad, i.estado
                        FROM item_inventario i
