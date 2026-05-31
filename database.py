@@ -16,6 +16,7 @@ def validar_login(username, password):
     conexion = conectar()
     if conexion:
         try:
+            # Esta es la línea crítica para PostgreSQL
             cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             sql = "SELECT * FROM usuarios WHERE username = %s AND password = %s"
             cursor.execute(sql, (username, password))
