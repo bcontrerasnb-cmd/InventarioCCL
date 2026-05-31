@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style> .fila-clickable { cursor: pointer; } </style>
+    <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body class="bg-dashboard">
 
@@ -55,7 +56,11 @@
 
                 <form action="/inventario/{{ tipo_modulo }}/procesar" method="POST" id="formInventario">
                     <input type="hidden" name="id_item" id="txt_id_item">
-                    <input type="text" name="codigo" id="txt_codigo" class="form-control form-control-ghost" placeholder="Código de Barras" required>
+                    <div class="d-flex gap-2 mb-3">
+                        <input type="text" name="codigo" id="txt_codigo" class="form-control form-control-ghost mb-0" placeholder="Código QR / Barras" required>
+                        <button type="button" class="btn btn-secondary px-3" id="btnEscanear" title="Escanear con cámara">📷</button>
+                    </div>
+                    <div id="lectorQR" style="display: none; width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 15px; border: 2px solid var(--amarillo-oro);"></div>
                     <input type="text" name="nombre" id="txt_nombre" class="form-control form-control-ghost" placeholder="Nombre del Artículo" required>
 
                     <select name="categoria" id="cb_categoria" class="form-select form-control-ghost" required>
@@ -177,6 +182,85 @@
             let textoFila = fila.textContent.toLowerCase();
             fila.style.display = textoFila.includes(filtro) ? "" : "none";
         });
+    }
+
+    // ==========================================
+    // LÓGICA DEL ESCÁNER DE CÓDIGOS QR
+    // ==========================================
+    const btnEscanear = document.getElementById("btnEscanear");
+    const lectorDiv = document.getElementById("lectorQR");
+    let html5QrCode;
+    let escaneando = false;
+
+    btnEscanear.addEventListener("click", () => {
+        if (escaneando) {
+            // Si está escaneando, detener la cámara
+            html5QrCode.stop().then(() => {
+                lectorDiv.style.display = "none";
+                btnEscanear.innerHTML = "📷";
+                btnEscanear.classList.replace("btn-peligro", "btn-secondary");
+                escaneando = false;
+            });
+        } else {
+            // Iniciar la cámara
+            lectorDiv.style.display = "block";
+            btnEscanear.innerHTML = "✖ Detener";
+            btnEscanear.classList.replace("btn-secondary", "btn-peligro");
+            escaneando = true;
+
+            html5QrCode = new Html5Qrcode("lectorQR");
+            html5QrCode.start(
+                { facingMode: "environment" }, // Usa la cámara trasera
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                (codigoDecodificado) => {
+                    // Éxito: Se leyó un código
+                    document.getElementById('txt_codigo').value = codigoDecodificado;
+
+                    // Apagar la cámara tras leer
+                    html5QrCode.stop().then(() => {
+                        lectorDiv.style.display = "none";
+                        btnEscanear.innerHTML = "📷";
+                        btnEscanear.classList.replace("btn-peligro", "btn-secondary");
+                        escaneando = false;
+                    });
+
+                    // Magia: Buscar si el artículo ya existe en la tabla
+                    buscarYAutocompletarQR(codigoDecodificado);
+                },
+                (mensajeError) => {
+                    // Ignorar errores de escaneo continuo (cuando no hay un QR frente a la cámara)
+                }
+            ).catch((err) => {
+                alert("No se pudo acceder a la cámara. Revisa los permisos de tu navegador.");
+            });
+        }
+    });
+
+    function buscarYAutocompletarQR(codigoBuscado) {
+        let filas = document.querySelectorAll(".tabla-custom tbody tr");
+        let encontrado = false;
+
+        filas.forEach(function(fila) {
+            // Ignorar la fila de "No hay artículos"
+            if (fila.cells.length === 1) return;
+
+            // Obtener el texto de la primera celda (Código)
+            let codigoCelda = fila.cells[0].textContent.trim();
+
+            if (codigoCelda === codigoBuscado) {
+                encontrado = true;
+                // Simular un clic en la fila usando tu función existente
+                fila.click();
+            }
+        });
+
+        if (!encontrado) {
+            // Si es un código nuevo, limpiamos el formulario pero conservamos el código leído
+            limpiarFormulario();
+            document.getElementById('txt_codigo').value = codigoBuscado;
+            // Hacemos scroll hacia arriba para que el usuario empiece a llenar los datos
+            document.getElementById('formInventario').scrollIntoView({ behavior: 'smooth' });
+        }
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
